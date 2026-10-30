@@ -278,9 +278,7 @@ export default class Highlighter extends EventEmitter<EventHandlerMap> {
         };
 
         const text = range.toString();
-        let id = this.hooks.Render.UUID.call(start, end, text);
-
-        id = typeof id !== 'undefined' && id !== null ? id : uuid();
+        const id = this.hooks.Render.UUID.call(start, end, text) ?? uuid();
 
         const hRange = new HighlightRange(start, end, text, id);
 
@@ -318,12 +316,12 @@ export default class Highlighter extends EventEmitter<EventHandlerMap> {
             return;
         }
 
-        const doseExist = this.painter.removeHighlight(id);
+        const exists = this.painter.removeHighlight(id);
 
         this.cache.remove(id);
 
-        // only emit REMOVE event when highlight exist
-        if (doseExist) {
+        // only emit REMOVE event when the highlight exists
+        if (exists) {
             this.emit(EventType.REMOVE, { ids: [id] }, this);
         }
     }
@@ -430,7 +428,10 @@ export default class Highlighter extends EventEmitter<EventHandlerMap> {
         const $target = e.target as HTMLElement;
 
         if (!isHighlightWrapNode($target)) {
-            this._hoverId && this.emit(EventType.HOVER_OUT, { id: this._hoverId }, this, e);
+            if (this._hoverId) {
+                this.emit(EventType.HOVER_OUT, { id: this._hoverId }, this, e);
+            }
+
             this._hoverId = null;
 
             return;

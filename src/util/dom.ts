@@ -15,7 +15,7 @@ export const isHighlightWrapNode = ($node: HTMLElement): boolean =>
 /**
  * ===================================================================================
  * below methods (getHighlightId/getExtraHighlightId)
- * will check whether the node is inside a wrapper iteratively util reach the root node
+ * will check whether the node is inside a wrapper iteratively until they reach the root node
  * if the node is not inside the root, the id must be empty
  * ====================================================================================
  */
@@ -97,8 +97,10 @@ export const getHighlightsByRoot = ($roots: RootElement | RootElement[], wrapTag
     for (const $r of $roots) {
         const $list = $r.querySelectorAll<HTMLElement>(`${wrapTag}[data-${DATASET_IDENTIFIER}]`);
 
-        // eslint-disable-next-line prefer-spread
-        $wraps.push.apply($wraps, $list);
+        // push one by one: spreading a huge NodeList into arguments can overflow the call stack
+        for (let i = 0; i < $list.length; i++) {
+            $wraps.push($list[i]);
+        }
     }
 
     return $wraps;
@@ -111,20 +113,11 @@ export const getHighlightById = ($root: RootElement, id: string, wrapTag: string
     const $highlights: HTMLElement[] = [];
     const $list = $root.querySelectorAll<HTMLElement>(`${wrapTag}[data-${DATASET_IDENTIFIER}]`);
 
-    for (const $l of $list) {
-        const $n = $l;
-        const nid = $n.dataset[CAMEL_DATASET_IDENTIFIER];
-
-        if (nid === id) {
-            $highlights.push($n);
-            continue;
-        }
-
+    for (const $n of $list) {
         const extraId = $n.dataset[CAMEL_DATASET_IDENTIFIER_EXTRA];
 
-        if (extraId && extraId.split(ID_DIVISION).indexOf(id) !== -1) {
+        if ($n.dataset[CAMEL_DATASET_IDENTIFIER] === id || (extraId && extraId.split(ID_DIVISION).indexOf(id) !== -1)) {
             $highlights.push($n);
-            continue;
         }
     }
 

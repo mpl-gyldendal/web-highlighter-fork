@@ -70,9 +70,7 @@ class HighlightRange {
         };
 
         const text = range.toString();
-        let id = idHook.call(start, end, text);
-
-        id = typeof id !== 'undefined' && id !== null ? id : uuid();
+        const id = idHook.call(start, end, text) ?? uuid();
 
         return new HighlightRange(start, end, text, id);
     }

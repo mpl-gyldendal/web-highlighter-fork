@@ -2,10 +2,10 @@
 
 English | [简体中文](./ADVANCE.zh_CN.md)
 
-This part shows
+This guide explains:
 
-- how web-highlighter creates a new highlighted area and how it removes thems
-- when each hook is called and its usage
+- how web-highlighter creates and removes highlighted areas
+- when each hook is called and how to use it
 
 ## Workflow
 
@@ -15,9 +15,9 @@ This part shows
 
 ### Removing highlighted areas
 
-![removie highlighted areas](./img/remove-flow.jpg)
+![remove highlighted areas](./img/remove-flow.jpg)
 
-## Hooks - Use sample
+## Hooks - Usage example
 
 ```JavaScript
 // UUID hook
@@ -42,11 +42,11 @@ Hook into the process of generating a unique id.
 
 **return value needed:**
 
-- A new unique id.
+- A new unique id. It must be unique among the highlights and must not contain a semicolon (`;`), which separates the ids of overlapping highlights.
 
 ### `Render.SelectedNodes`
 
-Process all the text nodes in the highlighted area and return a new list by using this hook.
+Process all the text nodes in the highlighted area and return a new list.
 
 **arguments:**
 
@@ -55,7 +55,7 @@ Process all the text nodes in the highlighted area and return a new list by usin
 
 **return value needed:**
 
-- the text nodes need to be wrapped
+- the text nodes to be wrapped
 
 ### `Render.WrapNode`
 
@@ -72,13 +72,13 @@ Process the wrapping elements.
 
 ### `Serialize.Restore`
 
-Customize your own restoring method. When you tap this hook, the `HighlightSource` instance will use the function you pass to calculate the start and end nodes' info.
+Customize how a highlight is restored. When you tap this hook, the `HighlightSource` instance uses your function to calculate the start and end nodes' info.
 
 **arguments:**
 
 - hs: the current `HighlightSource` instance
-- start: a [DomNode type](https://github.com/alienzhou/web-highlighter/blob/master/src/types/index.ts#L75-L78) object which record the start info
-- end: a [DomNode type](https://github.com/alienzhou/web-highlighter/blob/master/src/types/index.ts#L75-L78) object which record the end info
+- start: a [DomNode type](https://github.com/alienzhou/web-highlighter/blob/master/src/types/index.ts#L75-L78) object that records the start info
+- end: a [DomNode type](https://github.com/alienzhou/web-highlighter/blob/master/src/types/index.ts#L75-L78) object that records the end info
 
 **return value needed:**
 
@@ -86,7 +86,7 @@ Customize your own restoring method. When you tap this hook, the `HighlightSourc
 
 ### `Serialize.RecordInfo`
 
-Add or modify some extra info when serialize the `HighlightRange` object.
+Add or modify extra info when the `HighlightRange` object is serialized.
 
 **arguments:**
 
@@ -100,7 +100,7 @@ Add or modify some extra info when serialize the `HighlightRange` object.
 
 ### `Remove.UpdateNodes`
 
-Process the affected wrapping elements when remove highlighted areas.
+Process the affected wrapping elements when highlighted areas are removed.
 
 **arguments:**
 

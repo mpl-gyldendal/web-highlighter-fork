@@ -34,9 +34,7 @@ class Cache extends EventEmitter {
     getAll(): HighlightSource[] {
         const list: HighlightSource[] = [];
 
-        for (const pair of this._data) {
-            list.push(pair[1]);
-        }
+        this._data.forEach(source => list.push(source));
 
         return list;
     }
@@ -44,11 +42,8 @@ class Cache extends EventEmitter {
     removeAll(): string[] {
         const ids: string[] = [];
 
-        for (const pair of this._data) {
-            ids.push(pair[0]);
-        }
-
-        this._data = new Map();
+        this._data.forEach((_source, id) => ids.push(id));
+        this._data.clear();
 
         return ids;
     }

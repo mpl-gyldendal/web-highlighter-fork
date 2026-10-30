@@ -13,44 +13,50 @@ import {
 } from '../util/const';
 import { unique } from '../util/tool';
 
+type ElementMatcher = ($node: HTMLElement) => boolean;
+
 /**
- * 支持的选择器类型
+ * Supported selector types:
  *  - class: .title, .main-nav
  *  - id: #nav, #js-toggle-btn
  *  - tag: div, p, span
+ *
+ * A selector is parsed once, so traversing a large tree does not parse it again for every node.
  */
-const isMatchSelector = ($node: HTMLElement, selector: string): boolean => {
-    if (!$node) {
-        return false;
+const compileSelector = (selector: string): ElementMatcher => {
+    if (selector.charAt(0) === '.') {
+        const className = selector.slice(1);
+
+        return $node => hasClass($node, className);
     }
 
-    if (/^\./.test(selector)) {
-        const className = selector.replace(/^\./, '');
+    if (selector.charAt(0) === '#') {
+        const id = selector.slice(1);
 
-        return $node && hasClass($node, className);
-    } else if (/^#/.test(selector)) {
-        const id = selector.replace(/^#/, '');
-
-        return $node && $node.id === id;
+        return $node => $node.id === id;
     }
 
     const tagName = selector.toUpperCase();
 
-    return $node && $node.tagName === tagName;
+    return $node => $node.tagName === tagName;
+};
+
+const compileExceptSelectors = (exceptSelectors?: string[]): ElementMatcher => {
+    const matchers = exceptSelectors ? exceptSelectors.map(compileSelector) : [];
+
+    return $node => matchers.some(isMatch => isMatch($node));
 };
 
 /**
- * If start node and end node is the same, don't need to tranvers the dom tree.
+ * If start node and end node is the same, don't need to traverse the dom tree.
  */
 const getNodesIfSameStartEnd = (
     $startNode: Text,
     startOffset: number,
     endOffset: number,
-    exceptSelectors?: string[],
+    isExcepted: ElementMatcher,
 ) => {
     let $element = $startNode as Node;
-
-    const isExcepted = ($e: HTMLElement) => exceptSelectors?.some(s => isMatchSelector($e, s));
 
     while ($element) {
         if ($element.nodeType === 1 && isExcepted($element as HTMLElement)) {
@@ -88,16 +94,15 @@ export const getSelectedNodes = (
     const $endNode = end.$node;
     const startOffset = start.offset;
     const endOffset = end.offset;
+    const isExcepted = compileExceptSelectors(exceptSelectors);
 
     // split current node when the start-node and end-node is the same
     if ($startNode === $endNode && $startNode instanceof Text) {
-        return getNodesIfSameStartEnd($startNode, startOffset, endOffset, exceptSelectors);
+        return getNodesIfSameStartEnd($startNode, startOffset, endOffset, isExcepted);
     }
 
     const nodeStack: (ChildNode | Document | HTMLElement | Text)[] = [$root];
     const selectedNodes: SelectedNode[] = [];
-
-    const isExcepted = ($e: HTMLElement) => exceptSelectors?.some(s => isMatchSelector($e, s));
 
     let withinSelectedRange = false;
     let curNode: Node = null;
@@ -233,15 +238,7 @@ const wrapPartialNode = (
         headSplit = true;
     }
 
-    const classNameList: string[] = [];
-
-    if (Array.isArray(className)) {
-        classNameList.push(...className);
-    } else {
-        classNameList.push(className);
-    }
-
-    addClass($wrap, unique(classNameList));
+    addClass($wrap, unique(Array.isArray(className) ? className : [className]));
     $fr.appendChild($wrap);
 
     if ($next) {
@@ -316,7 +313,7 @@ export const wrapHighlight = (
         $wrap = wrapNewNode(selected, range, className, wrapTag);
     }
     // text node, in a highlight wrap -> should split the existing highlight wrapper
-    else if (isHighlightWrapNode($parent) && (!isNodeEmpty($prev) || !isNodeEmpty($next))) {
+    else if (!isNodeEmpty($prev) || !isNodeEmpty($next)) {
         $wrap = wrapPartialNode(selected, range, className, wrapTag);
     }
     // completely overlap (with a highlight wrap) -> only add extra id info

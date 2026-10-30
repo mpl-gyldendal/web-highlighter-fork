@@ -1,7 +1,7 @@
 /**
- * Painter object is designed for some painting work about higlighting,
+ * Painter object is designed for some painting work about highlighting,
  * including rendering, cleaning...
- * No need to instantiate repeatly. A Highlighter instance will bind a Painter instance.
+ * No need to instantiate it repeatedly. A Highlighter instance will bind a Painter instance.
  */
 
 import type HighlightRange from '@src/model/range';
@@ -19,6 +19,21 @@ import {
     CAMEL_DATASET_IDENTIFIER,
     CAMEL_DATASET_IDENTIFIER_EXTRA,
 } from '@src/util/const';
+
+/**
+ * The first wrapper (in document order) whose main id is exactly the given id.
+ * The id is compared as data and is never parsed as part of a selector.
+ * It reads the dataset on every call, so it sees ids updated earlier in the same removal.
+ */
+const findWrapperById = ($wraps: ArrayLike<HTMLElement>, id: string): HTMLElement | null => {
+    for (let i = 0; i < $wraps.length; i++) {
+        if ($wraps[i].dataset[CAMEL_DATASET_IDENTIFIER] === id) {
+            return $wraps[i];
+        }
+    }
+
+    return null;
+};
 
 export default class Painter {
     options: PainterOptions;
@@ -126,7 +141,7 @@ export default class Painter {
                 $idToUpdate.push($s);
             }
             // main id isn't the target id but extra ids contains it -> just remove it from extra id
-            else if (spanId !== id && spanExtraIds && spanExtraIds.split(ID_DIVISION).indexOf(id) !== -1) {
+            else if (spanExtraIds && spanExtraIds.split(ID_DIVISION).indexOf(id) !== -1) {
                 $extraToUpdate.push($s);
             }
         }
@@ -153,8 +168,7 @@ export default class Painter {
             const newId = ids.shift();
 
             // find overlapped wrapper associated with "extra id"
-            // compare literally: the id is data and must never be parsed as part of a selector
-            const $overlapSpan = [...$spans].find($o => $o.dataset[CAMEL_DATASET_IDENTIFIER] === newId);
+            const $overlapSpan = findWrapperById($spans, newId);
 
             if ($overlapSpan) {
                 // empty the current class list
